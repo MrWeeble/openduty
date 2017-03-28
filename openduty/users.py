@@ -1,3 +1,6 @@
+from django.conf import settings
+from django.utils.module_loading import import_string
+
 from notification.helper import NotificationHelper
 
 __author__ = "dzsubek"
@@ -22,23 +25,27 @@ def list(request):
 def delete(request, id):
     try:
         user = User.objects.get(id = id)
-        user.delete()
-        return HttpResponseRedirect('/users/');
     except User.DoesNotExist:
         raise Http404
+    user.delete()
+    return HttpResponseRedirect('/users/')
 
 @login_required()
 def edit(request, id):
     try:
         user = User.objects.get(id = id)
-        user_methods = UserNotificationMethod.objects.filter(user = user).order_by('position')
-
-        return TemplateResponse(
-            request, 'users/edit.html',
-            {'item': user, 'methods': UserNotificationMethod.methods, 'user_methods': user_methods, 'empty_user_method': UserNotificationMethod()}
-        )
     except User.DoesNotExist:
         raise Http404
+
+    user_methods = UserNotificationMethod.objects.filter(user = user).order_by('position')
+    profile=[]
+    for notifier_path in settings.AVAILABLE_NOTIFIERS:
+        notifier_class = import_string("{}.Notifier".format(notifier_path))
+
+    return TemplateResponse(
+        request, 'users/edit.html',
+        {'item': user, 'methods': UserNotificationMethod.methods, 'user_methods': user_methods, 'empty_user_method': UserNotificationMethod()}
+    )
 
 @login_required()
 def new(request):

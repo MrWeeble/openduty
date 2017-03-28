@@ -145,6 +145,10 @@ DATABASES = {
 TWILIO_ACCOUNT_SID = TWILIO_SETTINGS.get("SID", "disabled")
 TWILIO_AUTH_TOKEN = TWILIO_SETTINGS.get("token", "disabled")
 
+AVAILABLE_NOTIFIERS=[
+    'notification.notifier.email',
+]
+
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = ''
 

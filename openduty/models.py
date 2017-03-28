@@ -15,8 +15,8 @@ from django.contrib.auth import models as auth_models
 from django.db.models import signals
 from django.conf import settings
 
-
 AUTH_USER_MODEL = getattr(settings, 'AUTH_USER_MODEL', 'auth.User')
+
 
 @python_2_unicode_compatible
 class Token(models.Model):
@@ -83,44 +83,40 @@ class Service(models.Model):
     def natural_key(self):
         return (self.id)
 
+
 @python_2_unicode_compatible
 class EventLog(models.Model):
     """
     Event Log
     """
-    ACTIONS = (('acknowledge', 'acknowledge'),
-               ('resolve', 'resolve'),
+    ACTIONS = (('acknowledge', 'acknowledge'), ('resolve', 'resolve'),
                ('silence_service', 'silence service'),
                ('unsilence_service', 'unsilence service'),
                ('silence_incident', 'silence incident'),
                ('unsilence_incident', 'unsilence incident'),
-               ('forward', 'forward'),
-               ('log', 'log'),
-               ('notified','notified'),
+               ('forward', 'forward'), ('log', 'log'), ('notified', 'notified'),
                ('notification_failed', 'notification failed'),
                ('trigger', 'trigger'))
 
     @property
     def color(self):
-        colort_dict = {'acknowledge': 'warning',
-                       'resolve': 'success',
-                       'silence_service': 'active',
-                       'unsilence_service': 'active',
-                       'silence_incident': 'active',
-                       'unsilence_incident': 'active',
-                       'forward': 'info',
-                       'trigger': 'trigger',
-                       'notified': 'success',
-                       'notification_failed': 'danger',
-                       'log': ''}
+        colort_dict = {
+            'acknowledge': 'warning', 'resolve': 'success',
+            'silence_service': 'active', 'unsilence_service': 'active',
+            'silence_incident': 'active', 'unsilence_incident': 'active',
+            'forward': 'info', 'trigger': 'trigger', 'notified': 'success',
+            'notification_failed': 'danger', 'log': ''
+            }
         return colort_dict[self.action]
 
-    user = models.ForeignKey(User, blank=True, default=None, null=True, related_name='users')
+    user = models.ForeignKey(User, blank=True, default=None, null=True,
+                             related_name='users')
     incident_key = models.ForeignKey('Incident', blank=True, null=True)
     action = models.CharField(choices=ACTIONS, default='log', max_length="100")
     service_key = models.ForeignKey(Service)
     data = models.TextField()
     occurred_at = models.DateTimeField()
+
     class Meta:
         verbose_name = _('eventlog')
         verbose_name_plural = _('eventlog')
@@ -149,13 +145,11 @@ class Incident(models.Model):
 
     @property
     def color(self):
-        colort_dict = {'acknowledge': 'warning',
-                       'resolve': 'success',
-                       'silence_service': 'active',
-                       'silence_incident': 'active',
-                       'forward': 'info',
-                       'trigger': 'trigger',
-                       'log': ''}
+        colort_dict = {
+            'acknowledge': 'warning', 'resolve': 'success',
+            'silence_service': 'active', 'silence_incident': 'active',
+            'forward': 'info', 'trigger': 'trigger', 'log': ''
+            }
         return colort_dict[self.event_type]
 
     class Meta:
@@ -168,9 +162,13 @@ class Incident(models.Model):
 
     def natural_key(self):
         return (self.service_key, self.incident_key)
+
     def clean(self):
         if self.event_type not in ['trigger', 'acknowledge', 'resolve']:
-            raise ValidationError("'%s' is an invalid event type, valid values are 'trigger', 'acknowledge' and 'resolve'" % self.event_type)
+            raise ValidationError(
+                "'%s' is an invalid event type, valid values are 'trigger', "
+                "'acknowledge' and 'resolve'" % self.event_type)
+
 
 @python_2_unicode_compatible
 class ServiceTokens(models.Model):
@@ -187,8 +185,6 @@ class ServiceTokens(models.Model):
 
     def __str__(self):
         return self.name
-
-
 
 
 @python_2_unicode_compatible
@@ -213,6 +209,7 @@ class SchedulePolicyRule(models.Model):
     def getRulesForService(cls, service):
         return cls.objects.filter(schedule_policy=service.policy)
 
+
 class UserProfile(models.Model):
     user = models.OneToOneField('auth.User', related_name='profile')
     phone_number = models.CharField(max_length=50)
@@ -223,6 +220,14 @@ class UserProfile(models.Model):
     prowl_application = models.CharField(max_length=256, blank=True)
     prowl_url = models.CharField(max_length=512, blank=True)
     rocket_webhook_url = models.CharField(max_length=512, blank=True)
+
+
+class UserNotificationProfile(models.Model):
+    user = models.OneToOneField('auth.User', related_name='profile')
+    notifier = models.CharField(max_length=200)
+    key = models.CharField(max_length=50)
+    value = models.TextField
+
 
 class ServiceSilenced(models.Model):
     service = models.ForeignKey(Service)
@@ -235,12 +240,13 @@ class IncidentSilenced(models.Model):
     silenced = models.BooleanField(default=False)
     silenced_until = models.DateTimeField()
 
+
 def create_user_profile(sender, instance, created, **kwargs):
     if created:
         UserProfile.objects.create(user=instance)
 
+
 signals.post_save.connect(create_user_profile, sender=User)
 
-signals.post_syncdb.disconnect(
-    sender=auth_models,
+signals.post_syncdb.disconnect(sender=auth_models,
     dispatch_uid='django.contrib.auth.management.create_superuser')

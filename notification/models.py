@@ -27,7 +27,7 @@ class UserNotificationMethod(models.Model):
 
     user = models.ForeignKey(User, related_name='notification_methods')
     position = models.IntegerField()
-    method = models.CharField(max_length=50)
+    method = models.CharField(max_length=200)
 
     class Meta:
         verbose_name = _('user_notification_method')
